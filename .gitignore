@@ -1,3 +1,6 @@
 env/
+build/
+dist/
+aplus_file_management.egg-info/
 
 .idea/
