@@ -1,3 +1,6 @@
 requests==2.22.0
 pytest==5.3.3
 pytest-check==0.3.7
+PyJWT[crypto] ~= 1.7.1
+Werkzeug==1.0.1
+

@@ -64,6 +64,7 @@ def tar_files_buffer(files, basedir):
     buffer.seek(0)
     return buffer
 
+
 def store_process_id(process_id, file):
     """store the id of this process
     """

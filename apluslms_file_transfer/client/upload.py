@@ -5,10 +5,10 @@ import requests
 from math import floor
 import logging
 
-from aplus_file_management.client.utils import (tar_files_buffer,
-                                                iter_read_chunks,
-                                                UploadError,
-                                                )
+from apluslms_file_transfer.client.utils import (tar_files_buffer,
+                                                 iter_read_chunks,
+                                                 UploadError,
+                                                 )
 
 logger = logging.getLogger(__name__)
 

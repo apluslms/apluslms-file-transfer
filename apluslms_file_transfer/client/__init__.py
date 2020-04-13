@@ -6,13 +6,13 @@ import json
 import requests
 import logging
 
-from aplus_file_management.client.fileinfo import get_files_manifest_in_folder
-from aplus_file_management.client.utils import (store_process_id,
-                                                GetFileUpdateError,
-                                                PublishError,
-                                                error_print,
-                                                )
-from aplus_file_management.client.upload import upload_files_to_server
+from apluslms_file_transfer.client.fileinfo import get_files_manifest_in_folder
+from apluslms_file_transfer.client.utils import (store_process_id,
+                                                 GetFileUpdateError,
+                                                 PublishError,
+                                                 error_print,
+                                                 )
+from apluslms_file_transfer.client.upload import upload_files_to_server
 
 logger = logging.getLogger(__name__)
 
