@@ -3,6 +3,7 @@ import json
 from uuid import uuid4
 import logging
 import shutil
+import threading
 
 from filelock import FileLock
 
@@ -29,7 +30,7 @@ def files_to_update(static_file_path, course_name, manifest_client, data):
         with open(os.path.join(static_file_path, course_name, 'manifest.json'), 'r') as manifest_srv_file:
             manifest_srv = json.load(manifest_srv_file)
 
-        if not whether_allow_renew(manifest_srv, manifest_client):
+        if not whether_allow_renew(manifest_srv, manifest_client, os.environ['SERVER_FILE']):
             raise GetFileUpdateError('Abort: the client version is older than server version')
 
         data['exist'] = True  # indicate the course exists in the server
@@ -95,4 +96,23 @@ def publish_files(static_file_path, course_name, file_type, temp_course_dir, res
 
     res_data['msg'] = 'The course is successfully uploaded'
     return res_data
+
+
+def start_cleanup(static_path, cleanup_time):
+
+    def cleanup():
+        dirs = next(os.walk(static_path))[1]
+        for temp_dir in [d for d in dirs if d.startswith('temp')]:
+            shutil.rmtree(os.path.join(static_path, temp_dir))
+
+        # Set the next thread to happen
+        global cleanup_thread
+        cleanup_thread = threading.Timer(cleanup_time, cleanup)
+        cleanup_thread.daemon = True
+        cleanup_thread.start()
+
+    global cleanup_thread
+    cleanup_thread = threading.Timer(cleanup_time, cleanup)
+    cleanup_thread.daemon = True
+    cleanup_thread.start()
 
