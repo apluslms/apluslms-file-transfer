@@ -1,10 +1,16 @@
 import os
-import sys
-import tarfile
-from werkzeug.exceptions import HTTPException
+import json
+import logging
+
+from filelock import FileLock
+
+from apluslms_file_transfer import FILE_TYPE1
+from apluslms_file_transfer.exceptions import error_print
+
+logger = logging.getLogger(__name__)
 
 
-def compare_files_to_update(manifest_client, manifest_srv):
+def get_update_files(manifest_srv, manifest_client):
     """ Get list of the files to update
     :param manifest_client: a nested dict dict[file] = {'size': , 'mtime': } in the client-side (a specific course)
     :param manifest_srv: a nested dict dict[file] = {'size': , 'mtime': } in the server side
@@ -32,71 +38,80 @@ def compare_files_to_update(manifest_client, manifest_srv):
     return files_to_update
 
 
-# Upload handlers
+def whether_allow_renew(manifest_srv, manifest_client, file_type):
+
+    if file_type in FILE_TYPE1:
+        # check whether the index mtime is earlier than the one in the server
+        index_key = "index.{}".format(file_type)
+        flag = manifest_client[index_key]['mtime'] > manifest_srv[index_key]['mtime']
+    else:
+        latest_mtime_srv = max(file['mtime'] for file in manifest_srv.values())
+        latest_mtime_client = max(file['mtime'] for file in manifest_client.values())
+        flag = latest_mtime_client > latest_mtime_srv
+
+    return flag
 
 
-def upload_octet_stream(file_data, temp_course_dir, file_index, chunk_index, last_chunk_flag):
-    """ Download file data posted by a request with octet-stream content-type to the temp course directory
-    """
-    # parse data
-    try:
-        os.makedirs(temp_course_dir, exist_ok=True)
+def create_new_manifest(static_file_path, course_name, temp_course_dir):
+    with open(os.path.join(temp_course_dir, 'files_to_update.json'), 'r') as f:
+        files_to_update = json.loads(f.read())
 
-        # write the compressed file
-        temp_compressed = os.path.join(temp_course_dir,
-                                       'temp_' + file_index + '.tar.gz')
+    files_new, files_update, files_keep, files_remove = (files_to_update['files_new'],
+                                                         files_to_update['files_update'],
+                                                         files_to_update['files_keep'],
+                                                         files_to_update['files_remove'])
+    os.remove(os.path.join(temp_course_dir, 'files_to_update.json'))
 
-        with open(temp_compressed, 'ab') as f:
-            f.seek(0, os.SEEK_END)
-            file_size = f.tell()
-            if chunk_index == str(file_size):
-                f.write(file_data)
+    course_dir = os.path.join(static_file_path, course_name)
 
-        if last_chunk_flag:  # The entire compressed file has been uploaded
-            # extract the compressed file to a 'temp' dir
-            with tarfile.open(temp_compressed, "r:gz") as tf:
-                tf.extractall(temp_course_dir)
+    if not os.path.exists(course_dir) and not files_update and not files_keep and not files_remove:
+        with open(os.path.join(temp_course_dir, 'manifest.json'), 'w') as f:
+            json.dump(files_new, f)
+    else:
+        manifest_file = os.path.join(static_file_path, course_name, 'manifest.json')
+        lock_f = os.path.join(static_file_path, course_name + '.lock')
+        lock = FileLock(lock_f)
+        try:
+            with lock.acquire(timeout=1):
+                with open(manifest_file, 'r') as f:
+                    manifest_srv = json.load(f)
 
-            os.remove(temp_compressed)  # Delete the compressed file
-    except:
-        raise
+            for f in files_keep:
+                temp_fp = os.path.join(temp_course_dir, f)
+                os.makedirs(os.path.dirname(temp_fp), exist_ok=True)
+                os.link(os.path.join(course_dir, f), temp_fp)
 
+            # add/update manifest
+            files_upload = {**files_new, **files_update}
+            for f in files_upload:
+                manifest_srv[f] = files_upload[f]
+            # remove old files
+            for f in files_remove:
+                # os.remove(os.path.join(course_dir, f))
+                del manifest_srv[f]
 
-def upload_form_data(file, temp_course_dir):
-    """ Upload file data posted by a request with form-data content-type to the temp course directory
-    """
-    try:
-        # write the compressed file
-        os.makedirs(temp_course_dir, exist_ok=True)
-        temp_compressed = os.path.join(temp_course_dir, 'temp.tar.gz')
-        with open(temp_compressed, 'wb') as f:
-            chunk_size = 4096
-            while True:
-                chunk = file.stream.read(chunk_size)
-                if len(chunk) == 0:
-                    break
-                f.write(chunk)
-
-        # extract the compression file
-        with tarfile.open(temp_compressed, "r:gz") as tf:
-            tf.extractall(temp_course_dir)
-
-        os.remove(temp_compressed)  # delete the compression file
-    except:
-        raise
+            with open(os.path.join(temp_course_dir, 'manifest.json'), 'w') as f:
+                json.dump(manifest_srv, f)
+            os.remove(lock_f)
+        except:
+            logger.debug(error_print())
+            os.remove(lock_f)
+            raise
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Error handling
+def convert_django_header(key):
 
-class ImproperlyConfigured(HTTPException):
-    pass
+    if key.startswith('HTTP_'):
+        return '-'.join(i.lower().capitalize() for i in key.replace('HTTP_', '').split('_'))
+
+    return key.lower()
 
 
-def error_print():
-    return '{}. {}, line: {}'.format(sys.exc_info()[0],
-                                     sys.exc_info()[1],
-                                     sys.exc_info()[2].tb_lineno)
+
+
+
+
+
 
 
 

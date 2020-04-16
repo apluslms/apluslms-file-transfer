@@ -5,9 +5,9 @@ import requests
 from math import floor
 import logging
 
+from apluslms_file_transfer.exceptions import UploadError
 from apluslms_file_transfer.client.utils import (tar_files_buffer,
                                                  iter_read_chunks,
-                                                 UploadError,
                                                  )
 
 logger = logging.getLogger(__name__)
@@ -41,10 +41,7 @@ def upload_files_by_tar(file_list, last_file, basedir, buff_size_threshold, uplo
 
     if pos <= buff_size_threshold or len(file_list) == 1:  # post the buffer
         files = {'file': buffer.getvalue()}
-        if file_list[-1][0] == last_file:
-            data['last_file'] = True
-        else:
-            data['last_file'] = False
+        data['last_file'] = (file_list[-1][0] == last_file)
         try:
             res = requests.post(upload_url, headers=headers, data=data, files=files)
             buffer.close()
@@ -62,19 +59,19 @@ def upload_files_by_tar(file_list, last_file, basedir, buff_size_threshold, uplo
 def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data, file_index):
     """
     upload a BytesIO buffer of a file by chunk
-    :param buffer:
-    :param whether_last_file:
-    :param upload_url:
-    :param headers:
-    :param data:
-    :param file_index:
+    :param BytesIO object buffer:
+    :param bool whether_last_file:
+    :param str upload_url:
+    :param dict headers:
+    :param dict data:
+    :param int file_index:
     :return:
     """
     chunk_size = 1024 * 1024 * 4
     index = 0
     for chunk, last_chunk in iter_read_chunks(buffer, chunk_size=chunk_size):
         offset = index + len(chunk)
-        headers['Content-Type'] = 'server_app/octet-stream'
+        headers['Content-Type'] = 'application/octet-stream'
         headers['Process-ID'] = data['process_id']
         headers['Chunk-Size'] = str(chunk_size)
         headers['Chunk-Index'] = str(index)
@@ -94,11 +91,17 @@ def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data
 
 
 def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
-    """ 1. the files bigger than 50MB are compressed one by one,
-        and the smaller files are collected to fill a quota (50MB) and then compressed
-        2. the compression file smaller than 4MB is posted directly, otherwise posted by chunks
     """
+    1. the files bigger than 50MB are compressed one by one,
+        and the smaller files are collected to fill a quota (50MB) and then compressed
+    2. the compression file smaller than 4MB is posted directly, otherwise posted by chunks
 
+    :param files_and_sizes:
+    :param basedir:
+    :param upload_url:
+    :param data:
+    :return:
+    """
     # sub listing the files by their sizes (threshold = 50 MB)
     big_files = list(filter(lambda x: x[1] > 50.0 * (1024 * 1024), files_and_sizes))
     small_files = list(filter(lambda x: x[1] <= 50.0 * (1024 * 1024), files_and_sizes))
@@ -111,10 +114,7 @@ def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
         for file_index, f in enumerate(big_files):
 
             headers = init_headers
-            if file_index == len(big_files) - 1 and not small_files:
-                last_file = True
-            else:
-                last_file = False
+            last_file = (file_index == len(big_files) - 1 and not small_files)
 
             # Create the in-memory file-like object
             buffer = BytesIO()

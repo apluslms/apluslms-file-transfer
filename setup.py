@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="apluslms_file_transfer",
-    version="0.0.1",
+    version="0.1",
     author="Qianqian Qin",
     author_email="qianqian.qin@outlook.com",
     description="A package for file transfer in apluslms",
@@ -19,15 +19,10 @@ setuptools.setup(
     install_requires=requirements,
     # extras_require={
     #     'dev': ['check-manifest'],
-    #     'test': [
-    #         'mock',
-    #         'PyHamcrest',
-    #         'pytest',
-    #         'pytest-cov'
-    #     ]
+    #     'test': ['pytest'],
     # },
-    setup_requires=['pytest-runner', 'flake8'],
-    tests_require=['pytest'],
+    # setup_requires=['pytest-runner', 'flake8'],
+    # tests_require=['pytest'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

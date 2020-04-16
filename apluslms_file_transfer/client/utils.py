@@ -1,8 +1,10 @@
 import os
-import sys
 from io import BytesIO
 import tarfile
 import json
+
+from apluslms_file_transfer import FILE_TYPE1
+from apluslms_file_transfer.exceptions import EnvVarNotFoundError
 
 
 def read_in_chunks(buffer, chunk_size=1024 * 1024.0 * 4):
@@ -72,14 +74,6 @@ def store_process_id(process_id, file):
         json.dump({'process_id': process_id}, f)
 
 
-class EnvVarNotFoundError(Exception):
-    def __init__(self, *var_name):
-        self.msg = " & ".join(*var_name) + " missing!"
-
-    def __str__(self):
-        return repr(self.msg)
-
-
 def examine_env_var():
     required = {'PLUGIN_API', 'PLUGIN_TOKEN', 'PLUGIN_COURSE'}
 
@@ -90,19 +84,28 @@ def examine_env_var():
         raise EnvVarNotFoundError(missing)
 
 
-class GetFileUpdateError(Exception):
-    pass
+def validate_directory(directory, file_type):
+    """ Check whether the static directory and the index.html file exist
+    :param directory: str, the path of a static directory
+    :param file_type: str, the file type to upload ('html', 'yaml')
+    :return: the path of the static directory, the path of the index.html file
+             and the modification time of the index.html
+    """
+    if file_type in FILE_TYPE1:
+        # The path of the subdirectory that contains static files
+        target_dir = os.path.join(directory, '_build', file_type)
+        index_file = os.path.join(target_dir, 'index.' + file_type)
+        if not os.path.exists(target_dir):
+            raise FileNotFoundError("_build/{} directory not found".format(file_type))
+        elif not os.path.isdir(target_dir):
+            raise NotADirectoryError("'_build/{}' is not a directory".format(file_type))
+        elif not os.path.exists(index_file):
+            raise FileNotFoundError("index.{} not found".format(file_type))
+
+        return {"target_dir": target_dir}
+    else:
+        # for future possible file types
+        # now raise a ValueError
+        raise ValueError("Unsupported file types")
 
 
-class UploadError(Exception):
-    pass
-
-
-class PublishError(Exception):
-    pass
-
-
-def error_print():
-    return '{}. {}, line: {}'.format(sys.exc_info()[0],
-                                     sys.exc_info()[1],
-                                     sys.exc_info()[2].tb_lineno)

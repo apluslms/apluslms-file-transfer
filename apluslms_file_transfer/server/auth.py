@@ -4,7 +4,7 @@ from functools import partial
 import jwt
 from werkzeug.exceptions import Unauthorized
 
-from .utils import ImproperlyConfigured
+from apluslms_file_transfer.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +49,27 @@ def prepare_decoder(app_instance):
     return None
 
 
-def jwt_auth(jwt_decode, authorization):
+def jwt_auth(jwt_decode, framework='flask', request=None):
 
     if jwt_decode is None:
         raise ImproperlyConfigured(
             "Received request to %s without JWT_PUBLIC_KEY in settings."
             % (__name__,))
 
+    # require authentication header
+    if framework == 'flask':
+        from flask import request
+        authorization = request.headers.get('Authorization')
+        if not authorization:
+            logger.debug("JWT auth failed: No authorization header")
+            raise Unauthorized("No authorization header")
+    elif framework == 'django':
+        authorization = request.META.get('HTTP_AUTHORIZATION')
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            logger.debug("JWT auth failed: No authorization header")
+            raise Unauthorized("No authorization header")
+    else:
+        raise ValueError("Unsupported framework")
     try:
         scheme, token = authorization.strip().split(' ', 1)
         if scheme.lower() != 'bearer': raise ValueError()
@@ -70,3 +84,26 @@ def jwt_auth(jwt_decode, authorization):
     except jwt.InvalidTokenError as exc:
         logger.debug("JWT auth failed: %s", exc)
         raise Unauthorized(str(exc))
+
+
+def authenticate(jwt_decode, framework='flask', request=None, **kwargs):
+
+    if framework == 'flask':
+        from flask import request
+        course_name = request.view_args['course_name']
+    elif framework == 'django':
+        course_name = kwargs.get('course_name', None)
+    else:
+        raise ValueError("Unsupported framework")
+    if not course_name:
+        raise Unauthorized('No valid course name provided')
+
+    auth = jwt_auth(jwt_decode, framework, request)
+
+    # check the payload
+    if ('sub' not in auth) or (not auth['sub'].strip()):
+        raise Unauthorized("Invalid payload")
+    assert auth['sub'].strip() == course_name, 'the course name in the url does not match the jwt token'
+
+    return auth
+
