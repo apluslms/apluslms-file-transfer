@@ -4,20 +4,21 @@ import json
 import requests
 import logging
 
-from apluslms_file_transfer.exceptions import PublishError, error_print
-from apluslms_file_transfer.client.fileinfo import get_files_to_upload
 from apluslms_file_transfer.client.utils import store_process_id
+from apluslms_file_transfer.client.fileinfo import get_files_to_upload
 from apluslms_file_transfer.client.upload_utils import upload_files_to_server
+from apluslms_file_transfer.exceptions import PublishError, error_print
 
 
 logger = logging.getLogger(__name__)
 
 
 def upload(get_files_url, upload_url, init_headers, target_dir, pid_file):
-    files_upload, pid = get_files_to_upload(get_files_url, init_headers, target_dir)
-    store_process_id(pid, pid_file)
+    files_upload, process_id = get_files_to_upload(get_files_url, init_headers, target_dir)
+    store_process_id(process_id, pid_file)
     try:
-        data = {"process_id": pid}
+        data = {"process_id": process_id}
+        print(data)
         upload_files_to_server(files_upload, target_dir, upload_url, data)
         print("The files are uploaded successfully")
     except:

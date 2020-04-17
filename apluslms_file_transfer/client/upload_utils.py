@@ -6,9 +6,7 @@ from math import floor
 import logging
 
 from apluslms_file_transfer.exceptions import UploadError
-from apluslms_file_transfer.client.utils import (tar_files_buffer,
-                                                 iter_read_chunks,
-                                                 )
+from apluslms_file_transfer.client.utils import tar_files_buffer, iter_read_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -72,15 +70,15 @@ def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data
     for chunk, last_chunk in iter_read_chunks(buffer, chunk_size=chunk_size):
         offset = index + len(chunk)
         headers['Content-Type'] = 'application/octet-stream'
-        headers['Process-ID'] = data['process_id']
-        headers['Chunk-Size'] = str(chunk_size)
-        headers['Chunk-Index'] = str(index)
-        headers['Chunk-Offset'] = str(offset)
-        headers['File-Index'] = str(file_index)
+        headers['X-Process-ID'] = data['process_id']
+        headers['X-Chunk-Size'] = str(chunk_size)
+        headers['X-Chunk-Index'] = str(index)
+        headers['X-Chunk-Offset'] = str(offset)
+        headers['X-File-Index'] = str(file_index)
         if last_chunk:
-            headers['Last-Chunk'] = 'True'
+            headers['X-Last-Chunk'] = 'True'
         if whether_last_file:
-            headers['Last-File'] = 'True'
+            headers['X-Last-File'] = 'True'
         index = offset
         try:
             res = requests.post(upload_url, headers=headers, data=chunk)
@@ -90,7 +88,7 @@ def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data
             raise UploadError(res.text)
 
 
-def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
+def upload_files_to_server(files_and_sizes, basedir, upload_url, request_data):
     """
     1. the files bigger than 50MB are compressed one by one,
         and the smaller files are collected to fill a quota (50MB) and then compressed
@@ -99,7 +97,7 @@ def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
     :param files_and_sizes:
     :param basedir:
     :param upload_url:
-    :param data:
+    :param request_data:
     :return:
     """
     # sub listing the files by their sizes (threshold = 50 MB)
@@ -136,16 +134,16 @@ def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
             if pos <= 4.0 * (1024 * 1024):
                 # upload the whole compressed file
                 file = {'file': buffer.getvalue()}
-                data['last_file'] = last_file
+                request_data['last_file'] = last_file
                 try:
-                    res = requests.post(upload_url, headers=headers, data=data, files=file)
+                    res = requests.post(upload_url, headers=headers, data=request_data, files=file)
                 except:
                     raise
                 if res.status_code != 200:
                     raise UploadError(res.text)
 
             else:   # Upload the compressed file by chunks
-                upload_fbuffer_by_chunk(buffer, last_file, upload_url, init_headers, data, file_index)
+                upload_fbuffer_by_chunk(buffer, last_file, upload_url, init_headers, request_data, file_index)
 
             buffer.close()
 
@@ -157,5 +155,5 @@ def upload_files_to_server(files_and_sizes, basedir, upload_url, data):
         }
         last_file = small_files[-1][0]
 
-        upload_files_by_tar(small_files, last_file, basedir, 4 * 1024 * 1024, upload_url, headers, data)
+        upload_files_by_tar(small_files, last_file, basedir, 4 * 1024 * 1024, upload_url, headers, request_data)
 

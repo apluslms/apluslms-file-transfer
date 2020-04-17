@@ -49,34 +49,20 @@ def prepare_decoder(app_instance):
     return None
 
 
-def jwt_auth(jwt_decode, framework='flask', request=None):
+def jwt_auth(jwt_decode, headers):
 
-    if jwt_decode is None:
-        raise ImproperlyConfigured(
-            "Received request to %s without JWT_PUBLIC_KEY in settings."
-            % (__name__,))
-
-    # require authentication header
-    if framework == 'flask':
-        from flask import request
-        authorization = request.headers.get('Authorization')
-        if not authorization:
-            logger.debug("JWT auth failed: No authorization header")
-            raise Unauthorized("No authorization header")
-    elif framework == 'django':
-        authorization = request.META.get('HTTP_AUTHORIZATION')
-        if 'HTTP_AUTHORIZATION' not in request.META:
-            logger.debug("JWT auth failed: No authorization header")
-            raise Unauthorized("No authorization header")
-    else:
-        raise ValueError("Unsupported framework")
     try:
+        # require authentication header
+        authorization = headers.get('Authorization')
+        if authorization is None:
+            logger.debug("JWT auth failed: No authorization header")
+            raise ValueError("JWT auth failed: No authorization header")
         scheme, token = authorization.strip().split(' ', 1)
-        if scheme.lower() != 'bearer': raise ValueError()
-    except ValueError:
-        logger.debug("JWT auth failed: Invalid authorization header: %r",
-                     authorization)
-        raise Unauthorized("Invalid authorization header")
+        if scheme.lower() != 'bearer': raise ValueError("JWT auth failed: Invalid authorization header: %r",
+                                                        authorization)
+    except ValueError as exc:
+        logger.error(exc)
+        raise Unauthorized(str(exc))
 
     # decode jwt token
     try:
@@ -86,19 +72,12 @@ def jwt_auth(jwt_decode, framework='flask', request=None):
         raise Unauthorized(str(exc))
 
 
-def authenticate(jwt_decode, framework='flask', request=None, **kwargs):
+def authenticate(jwt_decode, headers, course_name):
 
-    if framework == 'flask':
-        from flask import request
-        course_name = request.view_args['course_name']
-    elif framework == 'django':
-        course_name = kwargs.get('course_name', None)
-    else:
-        raise ValueError("Unsupported framework")
-    if not course_name:
+    if course_name is None:
         raise Unauthorized('No valid course name provided')
 
-    auth = jwt_auth(jwt_decode, framework, request)
+    auth = jwt_auth(jwt_decode, headers)
 
     # check the payload
     if ('sub' not in auth) or (not auth['sub'].strip()):

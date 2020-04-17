@@ -87,9 +87,8 @@ def examine_env_var():
 def validate_directory(directory, file_type):
     """ Check whether the static directory and the index.html file exist
     :param directory: str, the path of a static directory
-    :param file_type: str, the file type to upload ('html', 'yaml')
-    :return: the path of the static directory, the path of the index.html file
-             and the modification time of the index.html
+    :param file_type: str, the file type to upload
+    :return: dict, key="target_dir", value=the directory where the files are uploaded
     """
     if file_type in FILE_TYPE1:
         # The path of the subdirectory that contains static files

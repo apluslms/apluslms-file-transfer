@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as f:
+with open("requirements.txt", "r") as f:
     requirements = f.read().splitlines()
 
 setuptools.setup(
@@ -17,13 +17,8 @@ setuptools.setup(
     url="https://github.com/QianqianQ/apluslms-file-transfer",
     packages=setuptools.find_packages(include=['apluslms_file_transfer']),
     install_requires=requirements,
-    # extras_require={
-    #     'dev': ['check-manifest'],
-    #     'test': ['pytest'],
-    # },
-    # setup_requires=['pytest-runner', 'flake8'],
-    # tests_require=['pytest'],
     classifiers=[
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",

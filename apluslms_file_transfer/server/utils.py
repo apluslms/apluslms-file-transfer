@@ -87,7 +87,6 @@ def create_new_manifest(static_file_path, course_name, temp_course_dir):
                 manifest_srv[f] = files_upload[f]
             # remove old files
             for f in files_remove:
-                # os.remove(os.path.join(course_dir, f))
                 del manifest_srv[f]
 
             with open(os.path.join(temp_course_dir, 'manifest.json'), 'w') as f:
@@ -99,12 +98,9 @@ def create_new_manifest(static_file_path, course_name, temp_course_dir):
             raise
 
 
-def convert_django_header(key):
+def tempdir_path(upload_dir, course_name, pid):
 
-    if key.startswith('HTTP_'):
-        return '-'.join(i.lower().capitalize() for i in key.replace('HTTP_', '').split('_'))
-
-    return key.lower()
+    return os.path.join(upload_dir, 'temp_' + course_name + '_' + pid)
 
 
 

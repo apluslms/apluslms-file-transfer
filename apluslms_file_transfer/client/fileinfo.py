@@ -1,12 +1,11 @@
 import os
 import json
 import requests
-import traceback
 from io import BytesIO
 from hashlib import sha256
 import logging
 
-from apluslms_file_transfer.exceptions import GetFileUpdateError
+from apluslms_file_transfer.exceptions import GetFileUpdateError, error_print
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +40,15 @@ def get_files_manifest_in_folder(directory):
 
 
 def get_files_to_upload(url, headers, target_dir):
+    """
+
+    :param url: str
+    :param headers: dict
+    :param target_dir: str
+    :return:
+        files_upload: a list of tuple (file_path, file_size)
+        pid: a str process_id
+    """
     manifest = get_files_manifest_in_folder(target_dir)
     buffer = BytesIO()
     buffer.write(json.dumps(manifest).encode('utf-8'))
@@ -69,10 +77,10 @@ def get_files_to_upload(url, headers, target_dir):
                 file_size = os.path.getsize(full_path)
                 files_upload.append((full_path, file_size))
 
-        pid = get_files_r.json().get("process_id")
+        process_id = get_files_r.json().get("process_id")
     except:
-        logger.error(traceback.format_exc())
+        logger.error(error_print())
         raise
 
-    return files_upload, pid
+    return files_upload, process_id
 
