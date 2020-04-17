@@ -1,7 +1,8 @@
 PyJWT[crypto] ~= 1.7.1
-requests==2.22.0
+requests>=2.10.0
 Werkzeug==1.0.1
 filelock==3.0.12
 Flask==1.1.1
+Django==1.9.7
 pytest==5.3.3
 pytest-check==0.3.7

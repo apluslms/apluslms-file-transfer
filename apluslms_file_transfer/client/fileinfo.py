@@ -79,7 +79,6 @@ def get_files_to_upload(url, headers, target_dir):
 
         process_id = get_files_r.json().get("process_id")
     except:
-        logger.error(error_print())
         raise
 
     return files_upload, process_id

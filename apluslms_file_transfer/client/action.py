@@ -18,11 +18,10 @@ def upload(get_files_url, upload_url, init_headers, target_dir, pid_file):
     store_process_id(process_id, pid_file)
     try:
         data = {"process_id": process_id}
-        print(data)
         upload_files_to_server(files_upload, target_dir, upload_url, data)
         print("The files are uploaded successfully")
-    except:
-        print(error_print())
+    except Exception as e:
+        print(str(e))
         sys.exit(1)
 
 
@@ -40,7 +39,7 @@ def publish(publish_url, init_headers, pid_file):
         if finalizer_r.status_code != 200:
             raise PublishError(finalizer_r.text)
         print("The files are published successfully")
-    except:
-        print(error_print())
+    except Exception as e:
+        print(str(e))
         sys.exit(1)
 
