@@ -7,10 +7,7 @@ import logging
 from apluslms_file_transfer.client.action import upload, publish
 from apluslms_file_transfer.client.utils import examine_env_var
 from apluslms_file_transfer import FILE_TYPE1
-from apluslms_file_transfer.exceptions import error_print
 from apluslms_file_transfer.client.utils import validate_directory
-
-from docker_file_uploader import COURSE_FOLDER, PROCESS_FILE
 
 logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4)
@@ -20,8 +17,11 @@ pp = pprint.PrettyPrinter(indent=4)
 # os.environ['PLUGIN_COURSE'] = 'def_course'
 # COURSE_FOLDER = '/u/71/qinq1/unix/Desktop/my_new_course'
 
+COURSE_FOLDER = os.getcwd()
+PROCESS_FILE = os.path.join(COURSE_FOLDER, "process_id.json")
 
-def main():
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--upload', dest='upload', action='store_true', default=False,
@@ -38,7 +38,6 @@ def main():
         file_type = args.file_type
     except:
         # parser.print_help()
-        logger.debug(error_print)
         logger.debug("Invalid args provided")
         sys.exit(1)
     # examine the environment variables
@@ -57,17 +56,13 @@ def main():
     # upload
     if action_upload:
 
-        get_files_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/get-files-to-update'
-        upload_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/upload-file'
+        get_files_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/select-files'
+        upload_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/upload-files'
 
-        # 1. get the file list to upload from the server side
         upload(get_files_url, upload_url, headers, target_dir, PROCESS_FILE)
 
     # publish
     elif action_publish:
-        publish_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/upload-finalizer'
+        publish_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/publish-files'
         publish(publish_url, headers, PROCESS_FILE)
 
-
-if __name__ == "__main__":
-    main()
