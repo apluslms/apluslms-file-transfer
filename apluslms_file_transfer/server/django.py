@@ -1,9 +1,61 @@
 import logging
+from functools import partial
+
+import jwt
+from django.conf import settings
 
 from apluslms_file_transfer.server.upload_utils import upload_octet_stream, upload_form_data
 from apluslms_file_transfer.server.utils import create_new_manifest, tempdir_path
+from apluslms_file_transfer.exceptions import ImproperlyConfigured
 
 logger = logging.getLogger(__name__)
+
+
+def setting_in_bytes(name):
+    value = getattr(settings, name)
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, str):
+        return value.encode('utf-8')
+    raise ImproperlyConfigured(
+        "Value for settings.%s is not bytes or str."
+        % (name,))
+
+
+def prepare_decoder():
+    options = {'verify_' + k: True for k in ('iat', 'iss')}
+    options.update({'require_' + k: True for k in ('iat',)})
+    if hasattr(settings, 'JWT_ISSUER'):
+        options['issuer'] = settings.JWT_ISSUER
+
+    if hasattr(settings, 'JWT_PUBLIC_KEY'):
+        try:
+            from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives.serialization import load_pem_public_key
+        except ImportError as error:
+            raise ImproperlyConfigured(
+                "`mooc-grader api` requires `cryptography` when using settings.JWT_PUBLIC_KEY: %s"
+                % (error,))
+        pem = setting_in_bytes('JWT_PUBLIC_KEY')
+        try:
+            key = load_pem_public_key(pem, backend=default_backend())
+        except ValueError as error:
+            raise ImproperlyConfigured(
+                "Invalid public key in JWT_PUBLIC_KEY: %s"
+                % (error,))
+        return partial(jwt.decode,
+                       key=key,
+                       algorithms=settings.JWT_ALGORITHM,
+                       **options)
+    return None
+
+
+def convert_django_header(key):
+
+    if key.startswith('HTTP_'):
+        key = key.replace('HTTP_', '')
+
+    return '-'.join(i.lower().capitalize() for i in key.split('_'))
 
 
 def upload_files(request, upload_dir, course_name, res_data):
@@ -50,10 +102,5 @@ def upload_files(request, upload_dir, course_name, res_data):
     return res_data
 
 
-def convert_django_header(key):
 
-    if key.startswith('HTTP_'):
-        key = key.replace('HTTP_', '')
-
-    return '-'.join(i.lower().capitalize() for i in key.split('_'))
 
