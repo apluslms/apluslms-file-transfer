@@ -7,7 +7,7 @@ import logging
 from apluslms_file_transfer.client.utils import store_process_id
 from apluslms_file_transfer.client.fileinfo import get_files_to_upload
 from apluslms_file_transfer.client.upload_utils import upload_files_to_server
-from apluslms_file_transfer.exceptions import PublishError, error_print
+from apluslms_file_transfer.exceptions import PublishError
 
 
 logger = logging.getLogger(__name__)

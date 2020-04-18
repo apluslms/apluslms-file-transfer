@@ -87,7 +87,7 @@ def upload_files(request, upload_dir, course_name, res_data):
             pid = request_data['process_id']
             temp_course_dir = tempdir_path(upload_dir, course_name, pid)
 
-            upload_form_data(file, temp_course_dir)
+            upload_form_data(file, temp_course_dir, framework='django')
 
             if request_data.get('last_file') is True or request_data.get('last_file') == 'True':
                 res_data['status'] = "completed"

@@ -29,7 +29,7 @@ def upload_octet_stream(temp_course_dir, file_data, file_index, chunk_index, las
         raise
 
 
-def upload_form_data(file, temp_course_dir):
+def upload_form_data(file, temp_course_dir, framework='flask'):
     """ Upload file data posted by a request with form-data content-type to the temp course directory
     """
     try:
@@ -38,12 +38,17 @@ def upload_form_data(file, temp_course_dir):
         temp_compressed = os.path.join(temp_course_dir, 'temp.tar.gz')
         with open(temp_compressed, 'wb') as f:
             chunk_size = 4096
-            while True:
-                chunk = file.stream.read(chunk_size)
-                if len(chunk) == 0:
-                    break
-                f.write(chunk)
-
+            if framework == 'flask':
+                while True:
+                    chunk = file.stream.read(chunk_size)
+                    if len(chunk) == 0:
+                        break
+                    f.write(chunk)
+            elif framework == 'django':
+                for chunk in file.chunks():
+                    f.write(chunk)
+            else:
+                raise ValueError("Unsupported framework")
         # extract the compression file
         with tarfile.open(temp_compressed, "r:gz") as tf:
             tf.extractall(temp_course_dir)

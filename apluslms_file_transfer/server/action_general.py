@@ -17,7 +17,7 @@ from apluslms_file_transfer.exceptions import (GetFileUpdateError,
 logger = logging.getLogger(__name__)
 
 
-def files_to_update(upload_dir, course_name, manifest_client, data):
+def files_to_update(upload_dir, course_name, upload_file_type, manifest_client, data):
 
     course_dir = os.path.join(upload_dir, course_name)
     # if the course has not been uploaded yet, upload all the files
@@ -32,7 +32,7 @@ def files_to_update(upload_dir, course_name, manifest_client, data):
         with open(os.path.join(course_dir, 'manifest.json'), 'r') as manifest_srv_file:
             manifest_srv = json.load(manifest_srv_file)
 
-        if not whether_allow_renew(manifest_srv, manifest_client, os.environ['SERVER_FILE']):
+        if not whether_allow_renew(manifest_srv, manifest_client, upload_file_type):
             raise GetFileUpdateError('Abort: the client version is older than server version')
 
         data['exist'] = True  # indicate the course exists in the server
