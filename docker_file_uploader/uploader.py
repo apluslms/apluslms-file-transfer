@@ -4,9 +4,10 @@ import argparse
 import pprint
 import logging
 
+from apluslms_file_transfer import FILE_TYPE1
+from apluslms_file_transfer.color_print import PrintColor
 from apluslms_file_transfer.client.action import upload, publish
 from apluslms_file_transfer.client.utils import examine_env_var
-from apluslms_file_transfer import FILE_TYPE1
 from apluslms_file_transfer.client.utils import validate_directory
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ if __name__ == "__main__":
         file_type = args.file_type
     except:
         # parser.print_help()
-        logger.debug("Invalid args provided")
+        PrintColor.err("Invalid args provided")
         sys.exit(1)
     # examine the environment variables
     examine_env_var()
@@ -55,14 +56,17 @@ if __name__ == "__main__":
     }
     # upload
     if action_upload:
-
         get_files_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/select-files'
         upload_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/upload-files'
 
+        PrintColor.header("Course: {}  File-Type: {}".format(os.environ['PLUGIN_COURSE'], file_type))
         upload(get_files_url, upload_url, headers, target_dir, PROCESS_FILE)
+        PrintColor.success("Success: Upload finished!")
 
     # publish
     elif action_publish:
+        PrintColor.header("Course: {}  File-Type: {}".format(os.environ['PLUGIN_COURSE'], file_type))
         publish_url = os.environ['PLUGIN_API'] + os.environ['PLUGIN_COURSE'] + '/publish-files'
         publish(publish_url, headers, PROCESS_FILE)
+        PrintColor.success("Success: Publish finished!")
 

@@ -106,5 +106,3 @@ def validate_directory(directory, file_type):
         # for future possible file types
         # now raise a ValueError
         raise ValueError("Unsupported file types")
-
-

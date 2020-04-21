@@ -5,7 +5,8 @@ from io import BytesIO
 from hashlib import sha256
 import logging
 
-from apluslms_file_transfer.exceptions import GetFileUpdateError, error_print
+from apluslms_file_transfer.exceptions import GetFileUpdateError
+from apluslms_file_transfer.color_print import PrintColor
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,9 @@ def get_files_to_upload(url, headers, target_dir):
             # upload the whole folder if the course not exist in the server yet
             # print("The course {} will be newly added".format(os.environ['PLUGIN_COURSE']))
             files_upload = [(target_dir, os.path.getsize(target_dir))]
+            path, dirs, files = next(target_dir)
+            PrintColor.info("The course does not exist before. "
+                            "{} new files to upload".format(len(files)))
         else:
             # else get the files to add/update
             # print("The course {} already exists, will be updated".format(os.environ['PLUGIN_COURSE']))
@@ -76,7 +80,9 @@ def get_files_to_upload(url, headers, target_dir):
                 full_path = os.path.join(target_dir, f)
                 file_size = os.path.getsize(full_path)
                 files_upload.append((full_path, file_size))
-
+            PrintColor.info("The course already exists. "
+                            "{} files to upload: {} new files, {} updated files".
+                            format(len(files_upload_dict), len(files_new), len(files_update)))
         process_id = get_files_r.json().get("process_id")
     except:
         raise
