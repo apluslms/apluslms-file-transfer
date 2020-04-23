@@ -65,9 +65,11 @@ def get_files_to_upload(url, headers, target_dir):
             # upload the whole folder if the course not exist in the server yet
             # print("The course {} will be newly added".format(os.environ['PLUGIN_COURSE']))
             files_upload = [(target_dir, os.path.getsize(target_dir))]
-            path, dirs, files = next(target_dir)
+            # path, dirs, files = next(os.walk(target_dir))
+            # PrintColor.info("The course does not exist before. "
+            #                 "{} new files to upload".format(len(files)))
             PrintColor.info("The course does not exist before. "
-                            "{} new files to upload".format(len(files)))
+                            "The whole directory will be uploaded")
         else:
             # else get the files to add/update
             # print("The course {} already exists, will be updated".format(os.environ['PLUGIN_COURSE']))
