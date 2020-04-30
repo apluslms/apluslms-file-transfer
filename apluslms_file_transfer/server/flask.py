@@ -1,3 +1,6 @@
+"""
+Functions for the servers built using Flask
+"""
 import logging
 from functools import partial
 
@@ -12,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 def setting_in_bytes(app_instance, name):
+    """Get the configuration value of the server
+
+    :param app_instance: the Flask object
+    :param name: the name of the configuration
+    :return: the value of the configuration
+    :rtype: bytes
+    """
+
     value = app_instance.config.get(name)
     if isinstance(value, bytes):
         return value
@@ -23,6 +34,8 @@ def setting_in_bytes(app_instance, name):
 
 
 def prepare_decoder(app_instance):
+    """ Return the jwt decoder
+    """
     options = {'verify_' + k: True for k in ('iat', 'iss')}
     options.update({'require_' + k: True for k in ('iat',)})
     jwt_issuer = app_instance.config.get('JWT_ISSUER')
@@ -52,7 +65,14 @@ def prepare_decoder(app_instance):
 
 
 def upload_files(upload_dir, course_name, res_data):
+    """Upload the files in the posted request to the server
 
+    :param str upload_dir: the directory path where the course directory located
+    :param str course_name: the name of the course
+    :param res_data: the initial dictionary containing info to send back to the client
+    :return: the dictionary that contains the manifest of the updated files to send back to the client
+    :rtype: dict
+    """
     content_type = request.content_type
 
     # upload/ update the courses files of a course

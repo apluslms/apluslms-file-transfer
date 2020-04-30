@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 
 def get_update_files(manifest_srv, manifest_client):
     """ Get list of the files to update
-    :param manifest_client: a nested dict dict[file] = {'size': , 'mtime': } in the client-side (a specific course)
-    :param manifest_srv: a nested dict dict[file] = {'size': , 'mtime': } in the server side
-    :return:
-            a nested dict containing the files of newly added, updated and removed
+
+    :param dict manifest_client: a nested dictionary (dict[file] = {'size': , 'mtime': }) in the client-side
+    :param dict manifest_srv: a nested dictionary (dict[file] = {'size': , 'mtime': }) in the server side
+    :return: a nested dict containing the files of newly added, updated and removed
+    :rtype: dict
     """
     if not isinstance(manifest_client, dict) or not isinstance(manifest_srv, dict):
         raise TypeError("The manifest is not a dict type")
@@ -39,7 +40,15 @@ def get_update_files(manifest_srv, manifest_client):
 
 
 def whether_allow_renew(manifest_srv, manifest_client, file_type):
+    """ Check whether the version in the client side is newer than that in the server side if the course already exists.
+    If so, the deployment process is allowed to continue, otherwise terminate.
 
+    :param dict manifest_srv: the file manifest in the server side
+    :param dict manifest_client: the file manifest in the client side
+    :param str file_type: the type of the files
+    :return: the flag that indicates whether the course can be renewed
+    :rtype: bool
+    """
     if file_type in FILE_TYPE1:
         # check whether the index mtime is earlier than the one in the server
         index_key = "index.{}".format(file_type)
@@ -53,6 +62,12 @@ def whether_allow_renew(manifest_srv, manifest_client, file_type):
 
 
 def create_new_manifest(static_file_path, course_name, temp_course_dir):
+    """Create a json file to store the manifest of the uploaded files
+
+    :param str static_file_path: the directory path where the course directory located
+    :param str course_name: the name of the course
+    :param str temp_course_dir: the temporary directory that the files are uploaded to
+    """
     with open(os.path.join(temp_course_dir, 'files_to_update.json'), 'r') as f:
         files_to_update = json.loads(f.read())
 
@@ -99,7 +114,14 @@ def create_new_manifest(static_file_path, course_name, temp_course_dir):
 
 
 def tempdir_path(upload_dir, course_name, pid):
+    """ Return the temporary directory that the files are uploaded to
 
+    :param str upload_dir: the directory path where the course directory located
+    :param str course_name: the name of the course
+    :param str pid: the id of this file deployment process
+    :return:
+        the temporary directory that the files in the client side are uploaded to
+    """
     return os.path.join(upload_dir, 'temp_' + course_name + '_' + pid)
 
 

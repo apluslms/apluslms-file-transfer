@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 def jwt_auth(jwt_decode, headers):
-
+    """ Authorize the jwt token in the headers of the request
+    """
     try:
         # require authentication header
         authorization = headers.get('Authorization')
@@ -30,6 +31,9 @@ def jwt_auth(jwt_decode, headers):
 
 
 def authenticate(jwt_decode, headers, course_name):
+    """
+    Authenticate the request
+    """
 
     if course_name is None:
         raise Unauthorized('No valid course name provided')

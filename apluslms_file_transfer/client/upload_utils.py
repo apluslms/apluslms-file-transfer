@@ -12,18 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 def upload_files_by_tar(file_list, last_file, basedir, buff_size_threshold, upload_url, headers, data):
-    """ Compress a list of files and upload.
-        If the buffer of the compression file smaller than buff_size_threshold, uploaded.
+    """ Compress a list of files and then upload. The function is used to upload small files.
+
+        If the buffer of the compression file smaller than buff_size_threshold, then it is upload.
         Otherwise the file list will be divided as two subsets.
         For each subset repeat the above process
 
-    :param file_list: a list of tuples (file_path, file_size)
-    :param last_file: str, the path of the last file in the complete file_list
-    :param basedir: str, the base directory of the relative file path
-    :param buff_size_threshold: float, the threshold of buffer size to determine division action
-    :param upload_url: api url for uploading files
-    :param headers: dict, headers of requests
-    :param data: dict, data of requests
+    :param list list file_list: a list of uploaded files (tuple(file_path, file_size))
+    :param str last_file: the path of the last file in the complete file_list
+    :param str basedir: the base directory of the relative file path
+    :param int|float buff_size_threshold: the threshold of buffer size to determine division action
+    :param str upload_url: the url for uploading files
+    :param dict headers: headers of requests
+    :param dict data: data of requests
     """
     if not file_list:
         raise ValueError("The file list is empty!")
@@ -56,14 +57,14 @@ def upload_files_by_tar(file_list, last_file, basedir, buff_size_threshold, uplo
 
 def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data, file_index):
     """
-    upload a BytesIO buffer of a file by chunk
-    :param BytesIO object buffer:
-    :param bool whether_last_file:
-    :param str upload_url:
-    :param dict headers:
-    :param dict data:
-    :param int file_index:
-    :return:
+    Upload a BytesIO buffer of a file by chunk. The function is used to upload big files.
+
+    :param BytesIO object buffer: buffer to upload
+    :param bool whether_last_file: whether the file is the last file to upload in this file employment process
+    :param str upload_url: the url for uploading files
+    :param dict headers: the headers in the request
+    :param dict data: the data in the request
+    :param int file_index: the index of the file in the (big) file list
     """
     chunk_size = 1024 * 1024 * 4
     index = 0
@@ -90,15 +91,16 @@ def upload_fbuffer_by_chunk(buffer, whether_last_file, upload_url, headers, data
 
 def upload_files_to_server(files_and_sizes, basedir, upload_url, request_data):
     """
+    Upload a collection of files to the server, using different uploading methods based on the fie size:
+
     1. the files bigger than 50MB are compressed one by one,
         and the smaller files are collected to fill a quota (50MB) and then compressed
     2. the compression file smaller than 4MB is posted directly, otherwise posted by chunks
 
-    :param files_and_sizes:
-    :param basedir:
-    :param upload_url:
-    :param request_data:
-    :return:
+    :param list files_and_sizes: a list of files to upload (tuple(file_path, file_size))
+    :param basedir: the base directory of the relative file path
+    :param upload_url: the url for uploading files
+    :param dict request_data: the data in the request
     """
     # sub listing the files by their sizes (threshold = 50 MB)
     big_files = list(filter(lambda x: x[1] > 50.0 * (1024 * 1024), files_and_sizes))

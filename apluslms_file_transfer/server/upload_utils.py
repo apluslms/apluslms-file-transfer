@@ -3,7 +3,14 @@ import tarfile
 
 
 def upload_octet_stream(temp_course_dir, file_data, file_index, chunk_index, last_chunk_flag):
-    """ Download file data posted by a request with octet-stream content-type to the temp course directory
+    """ Upload file data posted by a request with octet-stream content-type to the temp course directory.
+    The data may be the complete content of the file or a part of the file.
+
+    :param str temp_course_dir: the temporary directory that the file is uploaded to
+    :param file_data: the content of the file data (chunk)
+    :param int file_index: the index of the file in the uploaded file list
+    :param int chunk_index: the index of the uploaded chunk of the file
+    :param bool last_chunk_flag: the flag that indicates whether it is the last chunk of the file
     """
     # parse data
     try:
@@ -31,6 +38,10 @@ def upload_octet_stream(temp_course_dir, file_data, file_index, chunk_index, las
 
 def upload_form_data(file, temp_course_dir, framework='flask'):
     """ Upload file data posted by a request with form-data content-type to the temp course directory
+
+    :param file: the content of the file
+    :param str temp_course_dir: the temporary directory that the file is uploaded to
+    :param str framework: the framework that the server is built by ('flask', 'django')
     """
     try:
         # write the compressed file

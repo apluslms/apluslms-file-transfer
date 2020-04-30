@@ -1,3 +1,6 @@
+"""
+Functions for the servers built using Django
+"""
 import logging
 from functools import partial
 
@@ -12,6 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 def setting_in_bytes(name):
+    """Get the configuration value of the server
+
+    :param name: the name of the configuration
+    :return: the value of the configuration
+    :rtype: bytes
+    """
     value = getattr(settings, name)
     if isinstance(value, bytes):
         return value
@@ -23,6 +32,8 @@ def setting_in_bytes(name):
 
 
 def prepare_decoder():
+    """ Return the jwt decoder
+    """
     options = {'verify_' + k: True for k in ('iat', 'iss')}
     options.update({'require_' + k: True for k in ('iat',)})
     if hasattr(settings, 'JWT_ISSUER'):
@@ -51,6 +62,12 @@ def prepare_decoder():
 
 
 def convert_django_header(key):
+    """Convert the key in the headers into a specific format
+
+    :param str key: the key to convert in the headers
+    :return: the converted key
+    :rtype: str
+    """
 
     if key.startswith('HTTP_'):
         key = key.replace('HTTP_', '')
@@ -59,6 +76,14 @@ def convert_django_header(key):
 
 
 def upload_files(request, upload_dir, course_name, res_data):
+    """Upload the files in the posted request to the server
+
+    :param str upload_dir: the directory path where the course directory located
+    :param str course_name: the name of the course
+    :param res_data: the initial dictionary containing info to send back to the client
+    :return: the dictionary that contains the manifest of the updated files to send back to the client
+    :rtype: dict
+    """
 
     headers = {convert_django_header(k): v for k, v in request.META.items()}
 

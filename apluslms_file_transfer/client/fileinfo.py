@@ -12,7 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_manifest(file):
+    """
+    Get the manifest (modification time, checksum) of a file
 
+    :param str file: path of the file
+    :returns: the dict of the file manifest (key:'mtime', 'checksum')
+    :rtype: dict
+    """
     st = os.stat(file)
     return {"mtime": st.st_mtime_ns,
             "checksum": 'sha256:' + sha256(open(file, 'rb').read()).hexdigest()}
@@ -20,9 +26,11 @@ def get_manifest(file):
 
 def get_files_manifest_in_folder(directory):
     """
-    get manifest of files
-    :param directory: str, the path of the directory
-    :return: a nested dict with rel_file_name as the key and the value is a dict holding the file mtime and the size
+    Get the manifest of files in a folder
+
+    :param str directory: the path of the directory
+    :return: a nested dict  {rel_file_name: {"mtime":, "checksum":}}
+    :rtype: dict
     """
     # IGNORE = set(['.git', '.idea', '__pycache__'])  # or NONIGNORE if the dir/file starting with '.' is ignored
 
@@ -42,13 +50,14 @@ def get_files_manifest_in_folder(directory):
 
 def get_files_to_upload(url, headers, target_dir):
     """
+    Send request to the server to get the collection of files to upload
 
-    :param url: str
-    :param headers: dict
-    :param target_dir: str
-    :return:
-        files_upload: a list of tuple (file_path, file_size)
-        pid: a str process_id
+    :param str url: the url posted to the server
+    :param dict headers: the headers in the posted request
+    :param str target_dir: the directory path to upload
+    :returns:
+        - files_upload (:py:class:`list`) - a list of uploaded files (tuple (file_path, file_size))
+        - pid (:py:class:`str`) - a unique id of this file deployment process
     """
     manifest = get_files_manifest_in_folder(target_dir)
     buffer = BytesIO()

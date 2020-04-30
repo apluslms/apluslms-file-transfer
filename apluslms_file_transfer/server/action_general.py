@@ -18,6 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 def files_to_update(upload_dir, course_name, upload_file_type, manifest_client, data):
+    """ Compare the files between the server and the client, and then get the files to update.
+
+    :param upload_dir: the directory path where the course directory located
+    :param str course_name: the name of the course to upload/update
+    :param str upload_file_type: the file type of the uploaded files
+    :param dict manifest_client: the file manifest in the client side
+    :param data: the initial dictionary containing info to send back to the client
+    :return: the dictionary that contains the manifest of the updated files to send back to the client
+    :rtype: dict
+    """
 
     course_dir = os.path.join(upload_dir, course_name)
     # if the course has not been uploaded yet, upload all the files
@@ -58,6 +68,16 @@ def files_to_update(upload_dir, course_name, upload_file_type, manifest_client, 
 
 
 def publish_files(upload_dir, course_name, file_type, temp_course_dir, res_data):
+    """ Publish the uploaded files into the server
+
+    :param upload_dir: the directory path where the course directory located
+    :param course_name: the name of the course to upload/update
+    :param file_type: the file type of the uploaded files
+    :param temp_course_dir: the temporary directory where the uploaded files located
+    :param data: the initial dictionary that contains the info to send back to the client
+    :return: the dictionary that contains the info to send back to the client
+    :rtype: dict
+    """
     # if the course does exist, rename the temp dir
 
     course_dir = os.path.join(upload_dir, course_name)
@@ -93,6 +113,12 @@ def publish_files(upload_dir, course_name, file_type, temp_course_dir, res_data)
 
 
 def start_cleanup(static_path, cleanup_time):
+    """ The function for cleaning up the redundant directories in the server.
+    The redundant directories are those fail to be published.
+
+    :param static_path: the path of the course directories locate in
+    :param cleanup_time: the time interval (seconds) of the action execution
+    """
 
     def cleanup():
         dirs = next(os.walk(static_path))[1]
